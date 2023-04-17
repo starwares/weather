@@ -7,25 +7,13 @@ import requests
 from multiprocessing import Pool
 
 
-# Ссылка на страницу со списком городов России на Википедии
-url = 'https://ru.wikipedia.org/wiki/Список_городов_России'
-
-# Выполняем HTTP-запрос на получение HTML-кода страницы
-response = requests.get(url)
-
-# Используем BeautifulSoup для парсинга HTML-кода страницы
-soup = BeautifulSoup(response.text, 'html.parser')
-
-# Находим таблицу со списком городов и их гербами
-table = soup.find('table', {'class': 'standard sortable'})
-
-
 def download_coat_of_arms_of_the_city(image_url: str, city_name: str):
+    path = os.path.abspath(os.path.join(os.path.abspath(__file__), "..", "uploads", "гербы"))
     # Выполняем HTTP-запрос на получение герба города
     response = requests.get(image_url, stream=True)
     if response.status_code == 200:
         # Сохраняем герб на диск
-        with open(f'uploads/гербы/{city_name}.jpg', 'wb') as f:
+        with open(f'{path}/{city_name}.jpg', 'wb') as f:
             for chunk in response.iter_content(1024):
                 f.write(chunk)
 
@@ -41,27 +29,51 @@ def multi_download_pool(city_with_coat_of_arms_list: List):
     print(end - start)
 
 
-# Создаем папку для сохранения гербов
-if not os.path.exists('uploads/гербы'):
-    os.makedirs('uploads/гербы')
+def fill_in_data():
+    path = os.path.abspath(os.path.join(os.path.abspath(__file__), "..", "uploads", "гербы"))
 
-# Список городов с гербами еще не скаченных
-city_with_coat_of_arms_list = []
+    # Создаем папку для сохранения гербов
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    # Список городов с гербами еще не скаченных
+    city_with_coat_of_arms_list = []
+
+    # Ссылка на страницу со списком городов России на Википедии
+    url = 'https://ru.wikipedia.org/wiki/Список_городов_России'
+
+    # Выполняем HTTP-запрос на получение HTML-кода страницы
+    response = requests.get(url)
+
+    # Используем BeautifulSoup для парсинга HTML-кода страницы
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Находим таблицу со списком городов и их гербами
+    table = soup.find('table', {'class': 'standard sortable'})
+
+    # Список Всех городов
+    cities: List = []
 
 
-# Проходим по каждой строке таблицы, содержащей информацию о городах
-for row in table.find_all('tr')[1:]:
-    # Извлекаем название города и ссылку на его герб
-    columns = row.find_all('td')
-    city_name = columns[2].text.strip()
-    image_url = 'https:' + columns[1].find('img')['src']
-    # Проверка на существование файла
-    if not os.path.isfile(f'uploads/гербы/{city_name}.jpg'):
-        city_with_coat_of_arms_list.append((image_url, city_name))
+
+    # Проходим по каждой строке таблицы, содержащей информацию о городах
+    for row in table.find_all('tr')[1:]:
+        # Извлекаем название города и ссылку на его герб
+        columns = row.find_all('td')
+        city_name = columns[2].text.strip()
+        image_url = 'https:' + columns[1].find('img')['src']
+        cities.append(city_name)
+        # Проверка на существование файла
+        if not os.path.isfile(f'{path}/{city_name}.jpg'):
+            city_with_coat_of_arms_list.append((image_url, city_name))
+
+    return city_with_coat_of_arms_list, cities
 
 
-multi_download_pool(city_with_coat_of_arms_list)
+def start_uploads():
+    city_with_coat_of_arms_list, cities = fill_in_data()
+    multi_download_pool(city_with_coat_of_arms_list)
+    return cities
 
 
-
-
+# start_uploads()

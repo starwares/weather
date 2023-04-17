@@ -20,8 +20,8 @@ class Weather(Base):
     day = Column(DateTime, index=True)
     created = Column(DateTime, default=datetime.utcnow)
 
-    # city_id = Column(Integer, ForeignKey('cities.id'))
-    # city = relationship("City", backref="weather", cascade="all, delete-orphan")
+    city_id = Column(Integer, ForeignKey('cities.id'))
+    city = relationship("City", backref="weather", cascade="all, delete-orphan")
 
 
 class User(Base):
@@ -30,20 +30,20 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
 
-    # city_id = Column(Integer, ForeignKey('cities.id'))
-    # cities = relationship("City", backref="users")
+    city_id = Column(Integer, ForeignKey('cities.id'))
+    cities = relationship("City", backref="users")
 
 
-# class Cron(Base):
-#     __tablename__: str = "crons"
-#
-#     id = Column(Integer, primary_key=True, index=True)
-#     hour = Column(Integer)
-#     minutes = Column(Integer)
-#     seconds = Column(Integer)
-#     room_id = Column(Integer)
-#     user_id = Column(Integer, ForeignKey('users.id'))
-#     user = relationship("User", backref="crons")
-#     city_id = Column(Integer, ForeignKey('cities.id'))
-#     cities = relationship("City", backref="crons")
+class Cron(Base):
+    __tablename__: str = "crons"
+
+    id = Column(Integer, primary_key=True, index=True)
+    hour = Column(Integer)
+    minutes = Column(Integer)
+    seconds = Column(Integer)
+    room_id = Column(Integer)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    user = relationship("User", backref="crons")
+    city_id = Column(Integer, ForeignKey('cities.id'))
+    cities = relationship("City", backref="crons")
 
