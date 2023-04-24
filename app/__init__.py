@@ -1,94 +1,48 @@
+import os
+
 import requests
 import string
 import telebot
 from telebot import types
 from app.cities.main import start_uploads
+from app.crud import add_city_to_user
+
 bot = telebot.TeleBot('6025211553:AAEiqx3SooJR-pQGwqsqD0mYtg6urup_F1c')
-
-
-
-# Сортировка списка городов по алфавиту
-
-
-
-# Создание клавиатуры с городами
-# def create_city_keyboard():
-#     keyboard = telebot.types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-#     for city in cities:
-#         keyboard.add(city)
-#     return keyboard
-#
-#
-# # Обработчик команды /start
-# @bot.message_handler(commands=['start'])
-# def start(message):
-#     markup = create_city_keyboard()
-#     bot.send_message(message.chat.id, "Выберите город из списка:", reply_markup=markup)
-#
-#
-# # Обработчик сообщений с городами
-# @bot.message_handler(func=lambda message: message.text in cities)
-# def city_selected(message):
-#     # set_user_city(message.chat.id, message.text)
-#     markup = telebot.types.ReplyKeyboardRemove(selective=False)
-#     bot.send_message(message.chat.id, "Город {} выбран.".format(message.text), reply_markup=markup)
-
 
 # Создаем список городов
 cities = start_uploads()
-print(cities)
 
 arr_RU = ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ё', 'Ж', 'З', 'И', 'Й', 'К', 'Л', 'М', 'Н', 'О', 'П', 'Р', 'С', 'Т', 'У', 'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Щ', 'Э', 'Ю', 'Я'];
 
 # Создаем словарь, где ключами являются буквы алфавита, а значениями - списки городов начинающихся на эту букву
-# cities_by_first_letter = {}
-# for letter in arr_RU:
-#     cities_by_first_letter[letter] = [city for city in cities if city.startswith(letter)]
-#
-#
-# # Функция, которая создает клавиатуру с городами, начинающимися на заданную букву
-# def create_city_keyboard(letter):
-#     keyboard = types.InlineKeyboardMarkup(row_width=1)
-#     for city in cities_by_first_letter[letter]:
-#         button = types.InlineKeyboardButton(text=city, callback_data=city)
-#         keyboard.add(button)
-#     return keyboard
-#
-#
-# # Функция, которая создает клавиатуру с буквами алфавита
-# def create_alphabet_keyboard():
-#     keyboard = types.InlineKeyboardMarkup(row_width=13)
-#     for letter in string.ascii_uppercase:
-#         button = types.InlineKeyboardButton(text=letter, callback_data=letter)
-#         keyboard.add(button)
-#     return keyboard
-#
-#
-# # Обработчик нажатий на кнопки с буквами алфавита
-# @bot.callback_query_handler(lambda query: query.data in string.ascii_uppercase)
-# def handle_alphabet_query(query):
-#     letter = query.data
-#     keyboard = create_city_keyboard(letter)
-#     bot.send_message(chat_id=query.message.chat.id, text=f"Города на букву {letter}:", reply_markup=keyboard)
-#
-#
-# # Обработчик команды /cities
-# @bot.message_handler(commands=['cities'])
-# def handle_cities_command(message):
-#     keyboard = create_alphabet_keyboard()
-#     bot.send_message(chat_id=message.chat.id, text="Выберите букву алфавита:", reply_markup=keyboard)
-#
-#
-#
-#
-# # @bot.message_handler(commands=['start'])
-# # def start(message):
-# #     bot.send_message(message.chat.id, '<b>Привет Лиза</b>', parse_mode='html')
-# #
-# #
-# # @bot.message_handler()
-# # def get_user_text(message):
-# #     bot.send_message(message.chat.id, message, parse_mode='html')
-#
-#
-# bot.polling(none_stop=True)
+cities_by_first_letter = {}
+for letter in arr_RU:
+    cities_by_first_letter[letter] = [city for city in cities if city.startswith(letter)]
+
+
+@bot.message_handler(commands=['cities'])
+def cities(message):
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    for letter in arr_RU:
+        markup.add(types.InlineKeyboardButton(text=letter, callback_data=letter))
+    bot.send_message(message.chat.id, "Выберите букву с которой начинается интересующий Вас город России", reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call:True)
+def callback(call):
+    if call.message:
+        if call.data in arr_RU:
+            markup = types.InlineKeyboardMarkup(row_width=2)
+            for city in cities_by_first_letter[call.data]:
+                markup.add(types.InlineKeyboardButton(text=city, callback_data=city))
+            bot.send_message(call.message.chat.id, f'Города на буква {call.data}', reply_markup=markup)
+        elif call.data in cities_by_first_letter[call.data[0]]:
+
+            bot.send_photo(call.message.chat.id, photo=open(os.path.abspath(os.path.join(os.path.abspath(__file__),
+                                                                                         "..", "cities", "uploads",
+                                                                                         "гербы", f'{call.data}.jpg')),
+                                                            'rb'), caption=f"Вы Выбрали город {call.data}")
+
+
+if __name__ == "__main__":
+    bot.polling(none_stop=True)

@@ -26,8 +26,7 @@ def get_db():
 @contextmanager
 def session_scope(session: SessionORM = Session) -> SessionORM:
     """Provide a transactional scope around a series of operations."""
-    session = sessionmaker(bind=create_engine(settings.SQLALCHEMY_DATABASE_URL, client_encoding='utf8',
-                                              pool_size=20, poolclass=QueuePool, echo=True))
+    session = sessionmaker(bind=create_engine(settings.SQLALCHEMY_DATABASE_URL, pool_size=20, poolclass=QueuePool, echo=True))
     sess = session()
     try:
         yield sess

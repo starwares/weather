@@ -1,13 +1,14 @@
+import os
+
 from pydantic import BaseSettings
 from functools import lru_cache
 
 
 class Settings(BaseSettings):
     SQLALCHEMY_DATABASE_URL: str
-    HOST_URL: str
 
     class Config:
-        env_file = ".env"
+        env_file = os.path.abspath(os.path.join(os.path.abspath(__file__), "..", "..", ".env"))
 
 
 @lru_cache()
