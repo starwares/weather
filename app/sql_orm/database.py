@@ -3,7 +3,6 @@ from sqlalchemy.orm import sessionmaker, Session, declarative_base
 from sqlalchemy.orm.session import Session as SessionORM
 from contextlib import contextmanager
 from sqlalchemy.pool import QueuePool
-
 from app.settings import get_settings
 
 
@@ -36,3 +35,5 @@ def session_scope(session: SessionORM = Session) -> SessionORM:
         raise
     finally:
         sess.invalidate()
+
+

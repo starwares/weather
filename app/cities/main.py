@@ -7,19 +7,34 @@ import requests
 from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
 from app.crud import add_city_in_db
+from app.schemas import City
 
-def download_coat_of_arms_of_the_city(image_url_and_city_name: tuple):
+
+
+city_list = []
+
+
+def download_coat_of_arms_of_the_city(city: City):
     path = os.path.abspath(os.path.join(os.path.abspath(__file__), "..", "uploads", "гербы"))
-
-    image_url, city_name = image_url_and_city_name
     # Выполняем HTTP-запрос на получение герба города
-    response = requests.get(image_url, stream=True)
+    response = requests.get(city.image_url, stream=True)
     if response.status_code == 200:
         # Сохраняем герб на диск
-        with open(f'{path}/{city_name}.jpg', 'wb') as f:
+        with open(f'{path}/{city.name}.jpg', 'wb') as f:
             for chunk in response.iter_content(1024):
                 if chunk:
                     f.write(chunk)
+
+
+def parsing_maplink(city: City):
+    try:
+        response_city = requests.get(city.url)
+        soup_city = BeautifulSoup(response_city.text, 'html.parser')
+        maplink_for_city = soup_city.find("a", {'class': 'mw-kartographer-maplink'})
+        city.data_lat = maplink_for_city['data-lat']
+        city.data_lon = maplink_for_city['data-lon']
+    except Exception as e:
+        print(f"{city.name} не удалось узнать кординаты. Ошибка: {e}")
 
 
 def multi_download_pool(city_with_coat_of_arms_list: List):
@@ -35,12 +50,22 @@ def multi_download_pool(city_with_coat_of_arms_list: List):
 
 def multi_download_thread(city_with_coat_of_arms_list: List):
     start = time.time()
-    pool = ThreadPool(processes=100)
+    pool = ThreadPool(processes=10)
     pool.map(download_coat_of_arms_of_the_city, city_with_coat_of_arms_list)
     pool.close()
     pool.join()
     end = time.time()
-    print(end - start)
+    print(f"download: {end - start}")
+
+
+def multi_parsing_thread(cities: List):
+    start = time.time()
+    pool = ThreadPool(processes=10)
+    pool.map(parsing_maplink, cities)
+    pool.close()
+    pool.join()
+    end = time.time()
+    print(f"parsing: {end - start}")
 
 
 def fill_in_data():
@@ -65,11 +90,6 @@ def fill_in_data():
     # Находим таблицу со списком городов и их гербами
     table = soup.find('table', {'class': 'standard sortable'})
 
-    # Список Всех городов
-    cities: List = []
-
-
-
     # Проходим по каждой строке таблицы, содержащей информацию о городах
     for row in table.find_all('tr')[1:]:
         # Извлекаем название города и ссылку на его герб
@@ -77,22 +97,32 @@ def fill_in_data():
         city_name = columns[2].text.strip()
         if city_name.endswith("не призн."):
             city_name = city_name[:-9]
-        image_url = 'https:' + columns[1].find('img')['src']
-        cities.append(city_name)
-        # Проверка на существование файла
-        if not os.path.isfile(f'{path}/{city_name}.jpg'):
-            city_with_coat_of_arms_list.append((image_url, city_name))
+        city_url = columns[2].find('a', href=True)
+        # Заходим на страницу города и ищем его кординаты
+        if city_url:
+            city_url = f"https://ru.wikipedia.org{city_url['href']}"
+            for city in city_list:
+                if city.name == city_name:
+                    break
+            else:
+                city = City(id='', name=city_name, image_url='https:' + columns[1].find('img')['src'],
+                                      url=city_url, data_lat='', data_lon='')
+                city_list.append(city)
+                # Проверка на существование файла
+                if not os.path.isfile(f'{path}/{city_name}.jpg'):
+                    city_with_coat_of_arms_list.append(city)
+    multi_parsing_thread(city_with_coat_of_arms_list)
 
-    return city_with_coat_of_arms_list, cities
+    return city_with_coat_of_arms_list
 
 
 def start_uploads():
-    city_with_coat_of_arms_list, cities = fill_in_data()
+    city_with_coat_of_arms_list = fill_in_data()
     # multi_download_pool(city_with_coat_of_arms_list)
 
-    add_city_in_db([i[1] for i in city_with_coat_of_arms_list])
+    add_city_in_db(city_with_coat_of_arms_list)
     multi_download_thread(city_with_coat_of_arms_list)
-    return cities
+    return [city.name for city in city_list]
 
 
 # start_uploads()

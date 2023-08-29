@@ -10,6 +10,8 @@ class City(Base):
 
     id = Column(String, primary_key=True, index=True)
     name = Column(String, index=True, unique=True)
+    data_lat = Column(String)
+    data_lon = Column(String)
 
 
 class Weather(Base):

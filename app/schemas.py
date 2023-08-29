@@ -5,14 +5,21 @@ from pydantic import BaseModel
 
 
 class City(BaseModel):
-    id: int
+    id: str
     name: str
+    url: str | None
+    image_url: str | None
+    data_lat: str
+    data_lon: str
 
 
 class User(BaseModel):
     id: int
     name: str
     city: Optional[City] | None
+
+    class Config:
+        orm_mode = True
 
 
 class Weather(BaseModel):
