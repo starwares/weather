@@ -1,6 +1,6 @@
 import os
 
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 from functools import lru_cache
 
 
@@ -11,6 +11,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = os.path.abspath(os.path.join(os.path.abspath(__file__), "..", "..", ".env"))
+        env_file_encoding = 'utf-8'
 
 
 @lru_cache()

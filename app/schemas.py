@@ -18,8 +18,8 @@ class User(BaseModel):
     name: str
     city: Optional[City] | None
 
-    class Config:
-        orm_mode = True
+    # class Config:
+    #     orm_mode = True
 
 
 class Weather(BaseModel):
@@ -29,8 +29,8 @@ class Weather(BaseModel):
     day: datetime
     created: datetime
 
-    class Config:
-        orm_mode = True
+    # class Config:
+    #     orm_mode = True
 
 
 class Cron(BaseModel):
@@ -42,5 +42,5 @@ class Cron(BaseModel):
     city_id: int
     user_id: int
 
-    class Config:
-        orm_mode = True
+    # class Config:
+    #     orm_mode = True

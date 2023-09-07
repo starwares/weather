@@ -4,36 +4,17 @@ from sqlalchemy.orm.session import Session as SessionORM
 from contextlib import contextmanager
 from sqlalchemy.pool import QueuePool
 from app.settings import get_settings
+import asyncio
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 
 settings = get_settings()
 
-engine = create_engine(settings.SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+engine = create_async_engine(settings.SQLALCHEMY_DATABASE_URL, echo=True)
+session = async_sessionmaker(bind=engine, expire_on_commit=False)
 
 Base = declarative_base()
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-@contextmanager
-def session_scope(session: SessionORM = Session) -> SessionORM:
-    """Provide a transactional scope around a series of operations."""
-    session = sessionmaker(bind=create_engine(settings.SQLALCHEMY_DATABASE_URL, pool_size=20, poolclass=QueuePool, echo=True))
-    sess = session()
-    try:
-        yield sess
-        # sess.commit()
-    except:
-        sess.rollback()
-        raise
-    finally:
-        sess.invalidate()
 
 

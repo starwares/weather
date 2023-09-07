@@ -1,8 +1,12 @@
-sqlalchemy
+sqlalchemy[asyncio]
 alembic
 pydantic[dotenv]
 psycopg2
 pyTelegramBotAPI
 pandas
 beautifulsoup4
-
+aiohttp
+aiogram==3.0.0rc2
+aiosqlite
+pydantic-settings
+apscheduler

@@ -6,10 +6,9 @@ import multiprocessing
 import requests
 from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
-from app.crud import add_city_in_db
+from app.crud import add_city_in_db, get_city_maplink
 from app.schemas import City
-
-
+import asyncio
 
 city_list = []
 
@@ -116,13 +115,24 @@ def fill_in_data():
     return city_with_coat_of_arms_list
 
 
-def start_uploads():
+async def start_uploads():
     city_with_coat_of_arms_list = fill_in_data()
     # multi_download_pool(city_with_coat_of_arms_list)
 
-    add_city_in_db(city_with_coat_of_arms_list)
+    await add_city_in_db(city_with_coat_of_arms_list)
     multi_download_thread(city_with_coat_of_arms_list)
-    return [city.name for city in city_list]
+    return await get_city_maplink(city_list)
 
 
-# start_uploads()
+
+
+async def main():
+    new = await start_uploads()
+    print(new)
+    print("werverv")
+
+
+if __name__ =="__main__":
+    asyncio.run(main())
+
+
