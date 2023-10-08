@@ -7,7 +7,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
 scheduler = AsyncIOScheduler()
-scheduler.start()
+
 storage = MemoryStorage()
 settings = get_settings()
 

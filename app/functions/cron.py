@@ -12,11 +12,12 @@ async def start_load_cron():
         scheduler.add_job(send_some, "cron", id=cron.id, hour=str(cron.hour), minute='*/' + str(cron.minutes),
                           args=[cron.city_name,
                                 cron.user_id, ])
+    scheduler.start()
 
 
 # отрисовка погоды для задачи хранящейся в БД
 async def send_some(name, user_id):
-    city_coat_of_arms = types.FSInputFile(os.path.abspath(os.path.join(os.path.abspath(__file__), "..", "cities",
+    city_coat_of_arms = types.FSInputFile(os.path.abspath(os.path.join(os.path.abspath(__file__), "..", "..", "cities",
                                                                        "uploads", "гербы", f'{name}.jpg')))
     await bot.send_photo(chat_id=user_id, photo=city_coat_of_arms, caption=f"Вы Выбрали город {name}")
     for city in City.city_list:
