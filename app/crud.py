@@ -10,19 +10,24 @@ import asyncio
 
 async def create_user(id: str, city_name: str, name: str = "Anonymous"):
     try:
-        query = select(City).where(City.name == city_name)
+        query_city = select(City).where(City.name == city_name)
+        query_user = select(User).where(User.id == id)
         async with session_scope() as session:
             async with session.begin():
-                city = await session.scalar(query)
-                new_user = User(id=id, name=name, city_name=city.name)
-                session.add(new_user)
-            await session.commit()
+                city = await session.scalar(query_city)
+                user = await session.scalar(query_user)
+                if user:
+                    new_user = user
+                else:
+                    new_user = User(id=id, name=name, city_name=city.name)
+                    session.add(new_user)
+                    await session.commit()
             return new_user, city
     except Exception as e:
         print(e)
 
 
-async def create_cron(id_user: str, city_name: str, hour: str, minutes: str, seconds: str):
+async def create_cron(id_user: str, city_name: str, hour: int, minutes: int):
     user, city = await create_user(id=id_user, city_name=city_name)
     new_cron = Cron(id=str(uuid.uuid4()), hour=hour, minutes=minutes, user_id=user.id, city_name=city.name)
     async with session_scope() as session:
@@ -32,14 +37,18 @@ async def create_cron(id_user: str, city_name: str, hour: str, minutes: str, sec
         return new_cron
 
 
-async def delete_cron(id_user: str, city_name: str):
-    query = select(Cron).where(Cron.user_id == id_user, Cron.city_name == city_name)
-    async with session_scope() as session:
-        async with session.begin():
-            crones = await session.scalars(query)
-            if crones:
-                session.delete(crones)
-            await session.commit()
+async def delete_cron(id_user: str):
+    try:
+        query = select(Cron).where(Cron.user_id == id_user)
+        async with session_scope() as session:
+            async with session.begin():
+                cron = await session.scalar(query)
+                if cron:
+                    await session.delete(cron)
+                await session.commit()
+        return cron.id
+    except Exception:
+        return False
 
 
 async def get_cron(id_user: str):
@@ -48,9 +57,11 @@ async def get_cron(id_user: str):
     async with session_scope() as session:
         async with session.begin():
             crones = await session.scalars(query)
-    for cron in crones:
-        cron_strings += f"{cron.city_name} : {cron.hour}:{cron.minutes} \n"
-    return cron_strings
+    if crones:
+        for cron in crones:
+            cron_strings += f"{cron.city_name} : {cron.hour}:{cron.minutes} \n"
+        return cron_strings
+    return None
 
 
 async def get_all_cron():

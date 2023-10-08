@@ -1,14 +1,14 @@
 
-
+from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram import Bot, Dispatcher
-
-
+from app.cities.main import start_uploads
 from app.settings import get_settings
-
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
 scheduler = AsyncIOScheduler()
+scheduler.start()
+storage = MemoryStorage()
 settings = get_settings()
 
 bot = Bot(token=settings.BOT_TOKEN)
@@ -30,7 +30,11 @@ class City:
     cities = []
 
 
-
+async def start_load_cities():
+    City.city_list = await start_uploads()
+    City.cities = [city.name for city in City.city_list]
+    for letter in City.arr_RU:
+        City.cities_by_first_letter[letter] = [city for city in City.cities if city.startswith(letter)]
 
 
 
