@@ -6,11 +6,9 @@ import multiprocessing
 import requests
 from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
-from app.crud import add_city_in_db, get_city_maplink
+from app.crud import add_city_in_db, get_city_maplink, get_all_cities
 from app.schemas import City
 import asyncio
-
-city_list = []
 
 
 def download_coat_of_arms_of_the_city(city: City):
@@ -67,7 +65,7 @@ def multi_parsing_thread(cities: List):
     print(f"parsing: {end - start}")
 
 
-def fill_in_data():
+def fill_in_data(city_list):
     path = os.path.abspath(os.path.join(os.path.abspath(__file__), "..", "uploads", "гербы"))
 
     # Создаем папку для сохранения гербов
@@ -116,14 +114,13 @@ def fill_in_data():
 
 
 async def start_uploads():
-    city_with_coat_of_arms_list = fill_in_data()
+    city_list = await get_all_cities()
+    city_with_coat_of_arms_list = fill_in_data(city_list)
     # multi_download_pool(city_with_coat_of_arms_list)
 
     await add_city_in_db(city_with_coat_of_arms_list)
     multi_download_thread(city_with_coat_of_arms_list)
     return await get_city_maplink(city_list)
-
-
 
 
 async def main():

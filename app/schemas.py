@@ -5,7 +5,6 @@ from pydantic import BaseModel
 
 
 class City(BaseModel):
-    id: str
     name: str
     url: str | None
     image_url: str | None
@@ -14,7 +13,7 @@ class City(BaseModel):
 
 
 class User(BaseModel):
-    id: int
+    id: str
     name: str
     city: Optional[City] | None
 
@@ -23,8 +22,8 @@ class User(BaseModel):
 
 
 class Weather(BaseModel):
-    id: int
-    city_id: int
+    id: str
+    city_name: str
     degrees_Celsius: int
     day: datetime
     created: datetime
@@ -34,13 +33,13 @@ class Weather(BaseModel):
 
 
 class Cron(BaseModel):
-    id: int
+    id: str
     hour: int
     minutes: int
     seconds: int
     room_id: int
-    city_id: int
-    user_id: int
+    city_name: str
+    user_id: str
 
     # class Config:
     #     orm_mode = True

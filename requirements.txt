@@ -10,3 +10,4 @@ aiogram==3.0.0rc2
 aiosqlite
 pydantic-settings
 apscheduler
+aiogram-dialog==2.*

@@ -1,6 +1,5 @@
 import uuid
 
-
 from app.sql_orm.database import session as session_scope
 from app.sql_orm.models import City, User, Cron
 from sqlalchemy import select
@@ -9,40 +8,59 @@ from typing import List
 import asyncio
 
 
-async def create_user(id: str, city_name: str,  name: str = "Anonymous"):
+async def create_user(id: str, city_name: str, name: str = "Anonymous"):
     try:
         query = select(City).where(City.name == city_name)
         async with session_scope() as session:
             async with session.begin():
                 city = await session.scalar(query)
-                new_user = User(id=id, name=name, city_id=city.id)
-                await session.add(new_user)
-                await session.commit()
-                return new_user, city
+                new_user = User(id=id, name=name, city_name=city.name)
+                session.add(new_user)
+            await session.commit()
+            return new_user, city
     except Exception as e:
         print(e)
 
 
 async def create_cron(id_user: str, city_name: str, hour: str, minutes: str, seconds: str):
     user, city = await create_user(id=id_user, city_name=city_name)
-    new_cron = Cron(id=str(uuid.uuid4()), hour=hour, minutes=minutes, user_id=user.id, city_id=city.id)
+    new_cron = Cron(id=str(uuid.uuid4()), hour=hour, minutes=minutes, user_id=user.id, city_name=city.name)
     async with session_scope() as session:
         async with session.begin():
-            await session.add(new_cron)
+            session.add(new_cron)
+        await session.commit()
+        return new_cron
+
+
+async def delete_cron(id_user: str, city_name: str):
+    query = select(Cron).where(Cron.user_id == id_user, Cron.city_name == city_name)
+    async with session_scope() as session:
+        async with session.begin():
+            crones = await session.scalars(query)
+            if crones:
+                session.delete(crones)
             await session.commit()
-            return new_cron
+
+
+async def get_cron(id_user: str):
+    cron_strings = ""
+    query = select(Cron).where(Cron.user_id == id_user)
+    async with session_scope() as session:
+        async with session.begin():
+            crones = await session.scalars(query)
+    for cron in crones:
+        cron_strings += f"{cron.city_name} : {cron.hour}:{cron.minutes} \n"
+    return cron_strings
 
 
 async def get_all_cron():
-        try:
-            async with session_scope() as session:
-                async with session.begin():
-                    statement = select(Cron)
-                    result = await session.execute(statement)
-                    db_cron = result.scalars().all()
-                    return db_cron
-        except Exception as e:
-            print(e)
+    db_cron = []
+    async with session_scope() as session:
+        async with session.begin():
+            statement = select(Cron)
+            result = await session.execute(statement)
+            db_cron = result.scalars().all()
+    return db_cron
 
 
 def update_user():
@@ -71,16 +89,22 @@ async def add_maplink_for_city(city_name: str):
 
 
 async def add_city_in_db(cities: List):
-    try:
-        async with session_scope() as session:
-            async with session.begin():
-                city: Pydantic_city
-                for city in cities:
-                    await session.add(City(name=city.name, id=str(uuid.uuid4()),
-                                           data_lat=city.data_lat, data_lon=city.data_lon))
-                await session.commit()
-    except Exception as e:
-        print(e)
+    async with session_scope() as session:
+        async with session.begin():
+            for city in cities:
+                session.add(City(name=city.name, data_lat=city.data_lat, data_lon=city.data_lon))
+        await session.commit()
+    return cities
+
+
+async def get_all_cities():
+    db_cities = []
+    async with session_scope() as session:
+        async with session.begin():
+            statement = select(City)
+            result = await session.execute(statement)
+            db_cities = result.scalars().all()
+    return db_cities
 
 
 async def get_city_maplink(cities: List):
@@ -102,3 +126,10 @@ async def get_city_maplink(cities: List):
         print(e)
 
 
+async def main():
+    ar = await get_cron("750292830")
+    print(ar)
+
+
+if __name__ == '__main__':
+    asyncio.run(main())

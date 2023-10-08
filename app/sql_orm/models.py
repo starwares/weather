@@ -7,9 +7,7 @@ from app.sql_orm.database import Base
 
 class City(Base):
     __tablename__: str = "cities"
-
-    id = Column(String, primary_key=True, index=True)
-    name = Column(String, index=True, unique=True)
+    name = Column(String, primary_key=True, index=True, unique=True)
     data_lat = Column(String)
     data_lon = Column(String)
 
@@ -22,7 +20,7 @@ class Weather(Base):
     day = Column(DateTime, index=True)
     created = Column(DateTime, default=datetime.utcnow)
 
-    city_id = Column(String, ForeignKey('cities.id'))
+    city_name = Column(String, ForeignKey('cities.name'))
     city = relationship("City", backref="weather")
 
 
@@ -32,7 +30,7 @@ class User(Base):
     id = Column(String, primary_key=True, index=True)
     name = Column(String, index=True)
 
-    city_id = Column(String, ForeignKey('cities.id'))
+    city_name = Column(String, ForeignKey('cities.name'))
     cities = relationship("City", backref="users")
 
 
@@ -46,6 +44,6 @@ class Cron(Base):
     room_id = Column(String)
     user_id = Column(String, ForeignKey('users.id'))
     user = relationship("User", backref="crons")
-    city_id = Column(String, ForeignKey('cities.id'))
+    city_name = Column(String, ForeignKey('cities.name'))
     cities = relationship("City", backref="crons")
 
