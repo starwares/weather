@@ -11,6 +11,14 @@ from app.menu.dialog import Form
 from app.functions.cron import send_some, create
 
 
+@dp.message(Command('start'))
+async def cities(message: types.Message):
+    await message.answer("Добро пожаловать, Вы можете использовать команды:"
+                         " /cities - для выбора города,"
+                         " /location - для просмотра по локации, "
+                         "/crones - для ежедневного оповещения")
+
+
 @dp.message(Command('cities'))
 async def cities(message: types.Message):
     await message.answer("Выберите букву с которой начинается интересующий Вас город России"
@@ -96,8 +104,9 @@ async def on_city(message: types.Message, state: FSMContext):
         cities_menu = nav.create_menu(cities=City.cities_by_first_letter[message.text])
         await message.answer(f'Города на буква {message.text}',
                              reply_markup=cities_menu.as_markup(resize_keyboard=True),)
-    elif message.text in City.cities_by_first_letter[message.text[0]]:
-        await send_weather(message)
+    elif message.text[0] in City.arr_RU:
+        if message.text in City.cities_by_first_letter[message.text[0]]:
+            await send_weather(message)
     elif message.text == "Удалить":
         cron_id = await delete_cron(str(message.from_user.id))
         if cron_id:
